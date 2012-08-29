@@ -6,3 +6,6 @@ debian
 *.swp
 .gpairrc
 build
+*.txt
+*.log
+
