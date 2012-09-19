@@ -17,9 +17,11 @@
 ### END LICENSE
 
 import sys
+import time
 import optparse
 import gettext
 gettext.install("naturalscrolling")
+from logger import make_custom_logger
 
 from naturalscrolling_lib.naturalscrollingconfig import *
 from naturalscrolling.indicator import Indicator
@@ -27,6 +29,7 @@ from naturalscrolling_lib.gconfsettings import GConfSettings
 from naturalscrolling.xinputwarper import XinputWarper
 from naturalscrolling_lib.debugger import Debugger
 
+LOGGER = make_custom_logger()
 
 def main():
     """Support for command line options"""
@@ -35,10 +38,21 @@ def main():
         help=_("Show debug messages (-vv debugs naturalscrolling_lib also)"))
     parser.add_option("-d", "--debug", action="store_true",
         help=_("Enable debuging"))
+    parser.add_option("-r", "--restart", action="store_true",
+        help=_("Switch service off and on again"))
     (options, args) = parser.parse_args()
 
     if options.debug:
         Debugger().execute()
+        sys.exit(0)
+
+    if options.restart:
+        LOGGER.debug("Refreshing state from console ...")
+        try:
+            Indicator().refresh()
+        except Exception:
+            LOGGER.error("Unable to restart this time")
+            sys.exit(1)
         sys.exit(0)
 
     # Initialize the GConf client

@@ -16,12 +16,13 @@
 
 import re
 import gconf
+from logging import getLogger
 
 ## GConf setup
 
 # GConf root path
 GCONF_ROOT_DIR = "/apps/naturalscrolling"
-
+LOGGER = getLogger()
 
 class InvalidKey(Exception):
     """ Raised class when key is unknown """
@@ -38,6 +39,7 @@ class GConfServer(object):
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
+            LOGGER.debug("New instance")
             cls._instance = super(GConfServer, cls).__new__(cls, *args,
                                                                  **kwargs)
         return cls._instance
@@ -183,14 +185,14 @@ class GConfKey(object):
         Set a boolean key value to True
         """
         self.__value = 1
-        self.set_value()
+        self.set_value(True)
 
     def disable(self):
         """
         Set a boolean key value to False
         """
         self.__value = 0
-        self.set_value()
+        self.set_value(False)
 
     def find_or_create(self):
         """
@@ -260,6 +262,7 @@ class GConfSettings(object):
         Return a list of all XIDs of devices where naturalscrolling was
         registered as activated.
         """
+        LOGGER.debug("Activated devices xids getting")
         activated_devices_xids = []
         for entry in self.server().entries():
             try:

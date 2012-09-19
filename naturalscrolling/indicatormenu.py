@@ -21,13 +21,22 @@ import webbrowser
 from naturalscrolling_lib.naturalscrollingconfig import *
 from naturalscrolling_lib.gconfsettings import GConfSettings
 from naturalscrolling.xinputwarper import XinputWarper
+from logging import getLogger
+from wake_detect import WakeDetector
 
+LOGGER = getLogger()
 
 class IndicatorMenu(gtk.Menu):
+    watchman = None
 
     def __init__(self):
+        LOGGER.debug("Indicator Menu init")
+        self.indicator = None
+
+        LOGGER.debug("gtk Menu init")
         gtk.Menu.__init__(self)
 
+        LOGGER.debug("Appending menu items")
         # "Natural Scrolling" item is now dynamic.
         # Look at refresh() method
         self.__natural_scrolling = None
@@ -35,6 +44,7 @@ class IndicatorMenu(gtk.Menu):
         self.append(self.new_separator())
 
         menu_sub = gtk.Menu()
+        LOGGER.debug("Start at login")
         start_at_login = gtk.CheckMenuItem(_("Start at login"))
         if os.path.isfile(get_auto_start_file_path()):
             start_at_login.set_active(True)
@@ -42,11 +52,19 @@ class IndicatorMenu(gtk.Menu):
         menu_sub.append(start_at_login)
         start_at_login.show()
 
+        LOGGER.debug("Refresh")
+        refresh = gtk.MenuItem(_("Refresh"))
+        refresh.connect("activate", self.on_refresh_clicked)
+        self.append(refresh)
+        refresh.show()
+
+        LOGGER.debug("Preferences")
         preferences = gtk.MenuItem(_("Preferences"))
         preferences.set_submenu(menu_sub)
         self.append(preferences)
         preferences.show()
 
+        LOGGER.debug("About")
         about = gtk.MenuItem(_("About"))
         about.connect("activate", self.on_about_clicked)
         self.append(about)
@@ -54,14 +72,19 @@ class IndicatorMenu(gtk.Menu):
 
         self.append(self.new_separator())
 
+        LOGGER.debug("Quit")
         quit = gtk.MenuItem(_("Quit Natural Scrolling"))
         quit.connect("activate", self.on_quit_clicked)
         self.append(quit)
         quit.show()
 
+        LOGGER.debug("Menu items created")
         self.sync_checked_items_from_gconf()
 
+        LOGGER.debug("Menu show calling")
         self.show()
+
+        self.enabled = False
 
     def new_separator(self):
         seperator = gtk.SeparatorMenuItem()
@@ -72,8 +95,14 @@ class IndicatorMenu(gtk.Menu):
         """
         Check all gtk.CheckMenuItem depending on GConf keys values
         """
+        LOGGER.debug("Sync checked items from gconf")
         for xid in GConfSettings().activated_devices_xids():
             self.update_check_menu_item(xid, True)
+
+    def refresh_indicator(self):
+        if self.indicator:
+            LOGGER.debug("Indicator refresh from the menu")
+            return self.indicator.check_scrolling()
 
     def refresh(self, devices):
         """
@@ -84,6 +113,8 @@ class IndicatorMenu(gtk.Menu):
         "Natural scrolling" menu item will be a gtk.Menu of gtk.CheckMenuItem
         per device.
         """
+        LOGGER.debug("Indicator refresh called")
+
         if self.__natural_scrolling:
             self.remove(self.__natural_scrolling)
             self.__natural_scrolling = None
@@ -112,24 +143,35 @@ class IndicatorMenu(gtk.Menu):
         self.sync_checked_items_from_gconf()
 
     def on_quit_clicked(self, widget):
+        LOGGER.debug("Quiting")
+        if self.watchman:
+            self.watchman.stop()
         gtk.main_quit()
 
     def on_natural_scrolling_toggled(self, widget, data=None):
         """
         Fired method when user click on gtk.CheckMenuItem 'Natural Scrolling'
         """
-        enabled = widget.get_active()
-        natural_scrolling_or_device_name = widget.get_label()
-
+        self.enabled = widget.get_active()
+        self.set_scrolling_state(self.enabled, name=widget.get_label())
+        self.refresh_indicator()
+    
+    def set_scrolling_state(self, state, name="Natural Scrolling"):
         # When there is only one detected device
         # the label of the gtk.CheckMenuItem is "Natural Scrolling"
-        if natural_scrolling_or_device_name == "Natural Scrolling":
+        if name == "Natural Scrolling":
             # So the device XID is the id of the first device
             device_xid = XinputWarper().first_xid()
         else:
-            device_xid = XinputWarper().find_xid_by_name(widget.get_label())
+            device_xid = XinputWarper().find_xid_by_name(name)
 
-        GConfSettings().key(device_xid).set_value(enabled)
+        GConfSettings().key(device_xid).set_value(state)
+
+    def on_refresh_clicked(self, widget):
+        LOGGER.debug("Refresh menu clicked")
+        if self.indicator:
+            self.indicator.refresh()
+        self.refresh_indicator()
 
     def update_check_menu_item(self, xid, enabled):
         """

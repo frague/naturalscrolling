@@ -21,7 +21,9 @@
 # Do not touch unless you know what you're doing.
 # you're warned :)
 import os
+from logging import getLogger
 
+LOGGER = getLogger()
 
 __all__ = [
     "appliation_version",
@@ -36,8 +38,8 @@ __all__ = [
 # Where your project will look for your data (for instance, images and ui
 # files). By default, this is ../, relative your trunk layout
 __naturalscrolling_data_directory__ = "../"
-__version__ = "VERSION"
-__website__ = "http://webiste"
+__version__ = "0.5.6.4"
+__website__ = "https://github.com/frague/naturalscrolling"
 
 
 class project_path_not_found(Exception):
@@ -71,9 +73,10 @@ def get_data_path():
     """
 
     # Get pathname absolute or relative.
-    path = os.path.join(
-        os.path.dirname(__file__), __naturalscrolling_data_directory__)
+    #path = os.path.join(
+    #    os.path.dirname(__file__), __naturalscrolling_data_directory__)
 
+    path = '/usr/share/naturalscrolling'
     abs_data_path = os.path.abspath(path)
     if not os.path.exists(abs_data_path):
         raise project_path_not_found

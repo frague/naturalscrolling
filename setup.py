@@ -42,7 +42,7 @@ def update_config(values={}):
             fields = line.split(" = ") # Separate variable from value
             if fields[0] in values:
                 oldvalues[fields[0]] = fields[1].strip()
-                line = "%s = \"%s\"\n" % (fields[0], values[fields[0]])
+                #line = "%s = \"%s\"\n" % (fields[0], values[fields[0]])    # Just produces lots of unneeded quotes
             fout.write(line)
 
         fout.flush()
@@ -94,17 +94,17 @@ class InstallAndUpdateDataDirectory(DistUtilsExtra.auto.install_auto):
 
 DistUtilsExtra.auto.setup(
     name="naturalscrolling",
-    version="0.5.6",
+    version="0.5.6.4",
     license="GPL-3",
-    author="Charalampos Emmanouilidis",
+    author="Charalampos Emmanouilidis (with modifications by Nick Bogdanov)",
     author_email="charalampos.emmanouilidis@eumorphed.com",
     description="Natural Scrolling for Linux",
     long_description=("Natural Scrolling adds a menu bar item allowing the "
                       "direction of scrolling to be toggled"),
-    url="https://github.com/cemmanouilidis/naturalscrolling",
+    url="https://github.com/frague/naturalscrolling",
     cmdclass={"install": InstallAndUpdateDataDirectory},
     data_files=[("/usr/share/applications/", ["naturalscrolling.desktop"]),
-                ("share/naturalscrolling/media", ["media/Screenshot.png",
+                ("/usr/share/naturalscrolling/media", ["media/Screenshot.png",
                     "media/natural-scrolling-status-activated.png",
                     "media/natural-scrolling-status-not-activated.png",
                     "media/naturalscrolling.svg"])])

@@ -16,7 +16,9 @@
 
 import os
 import re
+from logging import getLogger
 
+LOGGER = getLogger()
 
 class XinputWarper(object):
     # Singleton
@@ -24,6 +26,7 @@ class XinputWarper(object):
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
+            LOGGER.debug("New instance")
             cls._instance = super(XinputWarper, cls).__new__(cls, *args,
                                                                  **kwargs)
             cls._instance.__xinput_list_pattern = re.compile(
@@ -35,12 +38,15 @@ class XinputWarper(object):
         return self.__xinput_list
     xinput_list = property(get_xinput_list)
 
-    def enable_natural_scrolling(self, devise_xid, enabled):
+    def enable_natural_scrolling(self, device_xid, enabled):
         """
         Global method to apply or not Natural Scrolling
         """
         map = os.popen("xinput get-button-map \"%s\"" %
-                       devise_xid).read().strip()
+                       device_xid).read().strip()
+        
+        LOGGER.debug("Setting scrolling reverse to %s" % enabled)
+        LOGGER.debug("Current map: %s" % map)
 
         if enabled == True:
             map = map.replace("4 5", "5 4")
@@ -49,7 +55,7 @@ class XinputWarper(object):
             map = map.replace("5 4", "4 5")
             map = map.replace("7 6", "6 7")
 
-        os.system("xinput set-button-map \"%s\" %s" % (devise_xid, map))
+        os.system("xinput set-button-map \"%s\" %s" % (device_xid, map))
 
     def find_xid_by_name(self, name):
         """
@@ -72,15 +78,21 @@ class XinputWarper(object):
         """
         Clear xinput cache in order to force refresh
         """
+        LOGGER.debug("Reset cache")
         self.__xinput_list = None
+    
+    def read_xinputs(self):
+        return self._xinput_list()
 
     def _xinput_list(self, name=None):
         """
         Refresh cache and/or search in cached xinput list
         """
         if not self.__xinput_list:
+            LOGGER.debug("Requesting xinouts:")
             self.__xinput_list = os.popen(("xinput list | grep -v 'XTEST' "
                                            "| grep -v '\[master '")).read()
+            LOGGER.debug(self.__xinput_list)
 
         if name:
             res = re.search(r'(.*%s.*)' % re.escape(name), self.__xinput_list)

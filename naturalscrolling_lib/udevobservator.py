@@ -19,6 +19,8 @@ from pyudev.glib import GUDevMonitorObserver
 from naturalscrolling.xinputwarper import XinputWarper
 from naturalscrolling_lib.gconfsettings import GConfSettings
 
+from logging import getLogger
+LOGGER = getLogger()
 
 class UDevObservator(object):
 
@@ -27,6 +29,8 @@ class UDevObservator(object):
 
     def start(self):
         """ Observe added and removed events """
+        LOGGER.debug("UDevObserver has started")
+
         monitor = pyudev.Monitor.from_netlink(pyudev.Context())
         monitor.filter_by(subsystem="input")
         observer = GUDevMonitorObserver(monitor)
@@ -79,6 +83,7 @@ class UDevObservator(object):
             - Create key in GConf for this new device
             - Call back observators
         """
+        LOGGER.debug("Device %s added" % device)
         if device.sys_name.startswith("event"):
             XinputWarper().reset_cache()
             GConfSettings().key(XinputWarper().find_xid_by_name(
@@ -92,6 +97,7 @@ class UDevObservator(object):
             - Delete key from GConf of the device
             - Call back observators
         """
+        LOGGER.debug("Device %s removed" % device)
         if device.sys_name.startswith("event"):
             try:
                 device_name = device.parent["NAME"][1:-1]
